@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Homograph Email Generator / Fazriansyah Demo</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    input, textarea { width: 100%; padding: 10px; margin-top: 10px; }
+    .output { white-space: pre-wrap; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Homograph Email Generator Fazriansyah Demo</h2>
+  <p>Input Real Email Here : </p>
+  <input type="text" id="emailInput" placeholder="contoh: google@gmail.com" />
+  <div class="output" id="output"></div>
+
+  <script>
+    const homoglyphs = {
+      'a': ['а'], // Cyrillic a
+      'e': ['е'], // Cyrillic e
+      'i': ['і'], // Cyrillic i
+      'o': ['о'], // Cyrillic o
+      'c': ['с'], // Cyrillic s
+      'y': ['у'], // Cyrillic u
+      'x': ['х'], // Cyrillic h
+    };
+
+    function generateHomographs(email) {
+      const [local, domain] = email.split('@');
+      const variations = new Set();
+
+      // Ganti satu huruf dalam local part tiap variasi
+      for (let i = 0; i < local.length; i++) {
+        const char = local[i];
+        if (homoglyphs[char]) {
+          for (const glyph of homoglyphs[char]) {
+            const newLocal = local.slice(0, i) + glyph + local.slice(i + 1);
+            variations.add(newLocal + '@' + domain);
+          }
+        }
+      }
+
+      // Kombinasi beberapa huruf (lebih dari 1 perubahan)
+      for (let i = 0; i < local.length; i++) {
+        const char = local[i];
+        if (homoglyphs[char]) {
+          for (let j = i + 1; j < local.length; j++) {
+            const nextChar = local[j];
+            if (homoglyphs[nextChar]) {
+              for (const g1 of homoglyphs[char]) {
+                for (const g2 of homoglyphs[nextChar]) {
+                  const newLocal = local.slice(0, i) + g1 + local.slice(i + 1, j) + g2 + local.slice(j + 1);
+                  variations.add(newLocal + '@' + domain);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return Array.from(variations);
+    }
+
+    document.getElementById('emailInput').addEventListener('input', function () {
+      const email = this.value.trim();
+      const outputDiv = document.getElementById('output');
+      if (!email.includes('@')) {
+        outputDiv.textContent = '';
+        return;
+      }
+      const results = generateHomographs(email);
+      outputDiv.textContent = results.length ? results.join('\n') : 'Tidak ada variasi homograph yang cocok.';
+    });
+  </script>
+</body>
+</html>
