@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Homograph Email Generator / Fazriansyah Demo</title>
+  <title>Obfuscation Generator / Fazriansyah</title>
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     input, textarea { width: 100%; padding: 10px; margin-top: 10px; }
@@ -10,67 +10,89 @@
   </style>
 </head>
 <body>
-  <h2>Homograph Email Generator Fazriansyah Demo</h2>
-  <p>Input Real Email Here : </p>
-  <input type="text" id="emailInput" placeholder="contoh: google@gmail.com" />
+  <h2>Obfuscation Generator / Bebas Input</h2>
+  <p>Input Teks (bebas: email, URL, nama, apapun):</p>
+  <input type="text" id="textInput" placeholder="contoh: google, google@gmail.com, https://google.com" />
   <div class="output" id="output"></div>
 
   <script>
     const homoglyphs = {
-      'a': ['а'], // Cyrillic a
-      'e': ['е'], // Cyrillic e
-      'i': ['і'], // Cyrillic i
-      'o': ['о'], // Cyrillic o
-      'c': ['с'], // Cyrillic s
-      'y': ['у'], // Cyrillic u
-      'x': ['х'], // Cyrillic h
+      'a': ['а', 'à', 'á'],
+      'e': ['е', 'ë', 'é'],
+      'i': ['і', 'í', 'ï'],
+      'o': ['о', 'ö', 'ò'],
+      'c': ['с', 'ç'],
+      'y': ['у'],
+      'x': ['х'],
+      'u': ['ü', 'ù'],
+      's': ['ѕ'],
+      'd': ['ԁ'],
+      'h': ['һ'],
+      'n': ['п']
     };
 
-    function generateHomographs(email) {
-      const [local, domain] = email.split('@');
-      const variations = new Set();
+    function generateHomoglyphs(input) {
+      const results = new Set();
 
-      // Ganti satu huruf dalam local part tiap variasi
-      for (let i = 0; i < local.length; i++) {
-        const char = local[i];
+      for (let i = 0; i < input.length; i++) {
+        const char = input[i];
         if (homoglyphs[char]) {
           for (const glyph of homoglyphs[char]) {
-            const newLocal = local.slice(0, i) + glyph + local.slice(i + 1);
-            variations.add(newLocal + '@' + domain);
+            const newText = input.slice(0, i) + glyph + input.slice(i + 1);
+            results.add(newText);
           }
         }
       }
 
-      // Kombinasi beberapa huruf (lebih dari 1 perubahan)
-      for (let i = 0; i < local.length; i++) {
-        const char = local[i];
-        if (homoglyphs[char]) {
-          for (let j = i + 1; j < local.length; j++) {
-            const nextChar = local[j];
-            if (homoglyphs[nextChar]) {
-              for (const g1 of homoglyphs[char]) {
-                for (const g2 of homoglyphs[nextChar]) {
-                  const newLocal = local.slice(0, i) + g1 + local.slice(i + 1, j) + g2 + local.slice(j + 1);
-                  variations.add(newLocal + '@' + domain);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      return Array.from(variations);
+      return Array.from(results);
     }
 
-    document.getElementById('emailInput').addEventListener('input', function () {
-      const email = this.value.trim();
+    function insertDots(input) {
+      const results = new Set();
+      for (let i = 1; i < input.length; i++) {
+        results.add(input.slice(0, i) + '.' + input.slice(i));
+      }
+      return Array.from(results);
+    }
+
+    function insertPlusVariants(input) {
+      return ['+test', '+xyz', '+1'].map(suffix => input + suffix);
+    }
+
+    function changeCase(input) {
+      return [
+        input.toUpperCase(),
+        input.toLowerCase(),
+        input.charAt(0).toUpperCase() + input.slice(1)
+      ];
+    }
+
+    function addZeroWidth(input) {
+      const zwsp = '\u200B';
+      const results = new Set();
+      for (let i = 1; i < input.length; i++) {
+        results.add(input.slice(0, i) + zwsp + input.slice(i));
+      }
+      return Array.from(results);
+    }
+
+    document.getElementById('textInput').addEventListener('input', function () {
+      const text = this.value.trim();
       const outputDiv = document.getElementById('output');
-      if (!email.includes('@')) {
+      if (!text) {
         outputDiv.textContent = '';
         return;
       }
-      const results = generateHomographs(email);
-      outputDiv.textContent = results.length ? results.join('\n') : 'Tidak ada variasi homograph yang cocok.';
+
+      const allVariants = new Set();
+
+      generateHomoglyphs(text).forEach(v => allVariants.add(v));
+      insertDots(text).forEach(v => allVariants.add(v));
+      insertPlusVariants(text).forEach(v => allVariants.add(v));
+      changeCase(text).forEach(v => allVariants.add(v));
+      addZeroWidth(text).forEach(v => allVariants.add(v));
+
+      outputDiv.textContent = allVariants.size ? Array.from(allVariants).join('\n') : 'Tidak ada variasi.';
     });
   </script>
 </body>
